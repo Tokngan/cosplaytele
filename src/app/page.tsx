@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { PostCard } from "@/components/PostCard";
 import { Pagination } from "@/components/Pagination";
 import { siteConfig } from "@/lib/config";
@@ -6,16 +5,13 @@ import { getPostRepository } from "@/lib/repositories";
 
 export const revalidate = 1800;
 
-type SP = Promise<{ page?: string }>;
+const homeHref = (n: number) => (n === 1 ? "/" : `/page/${n}`);
 
-export default async function HomePage({ searchParams }: { searchParams: SP }) {
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam) || 1);
-
-  const repo = getPostRepository();
-  const result = await repo.list({ page, perPage: siteConfig.defaultPostsPerPage });
-
-  if (page > 1 && result.items.length === 0) notFound();
+export default async function HomePage() {
+  const result = await getPostRepository().list({
+    page: 1,
+    perPage: siteConfig.defaultPostsPerPage,
+  });
 
   return (
     <>
@@ -28,7 +24,11 @@ export default async function HomePage({ searchParams }: { searchParams: SP }) {
           <PostCard key={post.id} post={post} priority={i < 3} />
         ))}
       </section>
-      <Pagination basePath="/" page={result.page} totalPages={result.totalPages} />
+      <Pagination
+        page={result.page}
+        totalPages={result.totalPages}
+        hrefForPage={homeHref}
+      />
     </>
   );
 }

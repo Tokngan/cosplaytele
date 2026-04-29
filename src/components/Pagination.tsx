@@ -1,20 +1,18 @@
 import Link from "next/link";
 
 export function Pagination({
-  basePath,
   page,
   totalPages,
+  hrefForPage,
 }: {
-  basePath: string;
   page: number;
   totalPages: number;
+  hrefForPage: (n: number) => string;
 }) {
   if (totalPages <= 1) return null;
-  const sep = basePath.includes("?") ? "&" : "?";
-  const link = (n: number) => (n === 1 ? basePath : `${basePath}${sep}page=${n}`);
 
-  const prev = page > 1 ? link(page - 1) : null;
-  const next = page < totalPages ? link(page + 1) : null;
+  const prev = page > 1 ? hrefForPage(page - 1) : null;
+  const next = page < totalPages ? hrefForPage(page + 1) : null;
 
   return (
     <nav className="mt-10 flex items-center justify-between border-t border-border pt-6 text-sm">

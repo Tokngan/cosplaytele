@@ -8,42 +8,57 @@ import { getPostRepository, getTaxonomyRepository } from "@/lib/repositories";
 export const revalidate = 3600;
 export const dynamicParams = true;
 
-type Params = Promise<{ slug: string }>;
+type Params = Promise<{ slug: string; n: string }>;
+
+function parsePageParam(value: string): number | null {
+  if (!/^[0-9]+$/.test(value)) return null;
+  const n = Number(value);
+  if (n < 2) return null;
+  return n;
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, n } = await params;
+  const page = parsePageParam(n);
+  if (!page) return { title: "Not found" };
+
   const term = await getTaxonomyRepository().getCategoryBySlug(slug);
   if (!term) return { title: "Not found" };
 
-  const url = `${siteConfig.url}/category/${term.slug}`;
+  const url = `${siteConfig.url}/category/${term.slug}/page/${page}`;
   return {
-    title: term.name,
-    description: term.description || `Posts in ${term.name}`,
+    title: `${term.name} — Page ${page}`,
     alternates: { canonical: url },
-    openGraph: { type: "website", url, title: term.name },
+    openGraph: { type: "website", url, title: `${term.name} — Page ${page}` },
   };
 }
 
-export default async function CategoryPage({ params }: { params: Params }) {
-  const { slug } = await params;
+export default async function CategoryPagedPage({ params }: { params: Params }) {
+  const { slug, n } = await params;
+  const page = parsePageParam(n);
+  if (!page) notFound();
+
   const term = await getTaxonomyRepository().getCategoryBySlug(slug);
   if (!term) notFound();
 
   const result = await getPostRepository().list({
-    page: 1,
+    page,
     perPage: siteConfig.defaultPostsPerPage,
     categorySlug: slug,
   });
 
-  const hrefForPage = (n: number) =>
-    n === 1 ? `/category/${term.slug}` : `/category/${term.slug}/page/${n}`;
+  if (result.items.length === 0) notFound();
+
+  const hrefForPage = (m: number) =>
+    m === 1 ? `/category/${term.slug}` : `/category/${term.slug}/page/${m}`;
 
   return (
     <>
       <header className="mb-8">
         <p className="text-sm text-muted">Category</p>
-        <h1 className="text-3xl font-semibold tracking-tight">{term.name}</h1>
-        {term.description ? <p className="mt-2 text-muted">{term.description}</p> : null}
+        <h1 className="text-3xl font-semibold tracking-tight">
+          {term.name} <span className="text-muted text-xl">— Page {page}</span>
+        </h1>
       </header>
       <section className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {result.items.map((post, i) => (
