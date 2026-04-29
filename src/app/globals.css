@@ -37,9 +37,14 @@ body {
   border-radius: 0.375rem;
 }
 .prose-post a {
-  color: #2563eb;
+  color: #1d4ed8;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  .prose-post a {
+    color: #93c5fd;
+  }
 }
 .prose-post p {
   margin: 1em 0;
