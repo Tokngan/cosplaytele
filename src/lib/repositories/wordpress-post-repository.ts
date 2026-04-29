@@ -7,7 +7,7 @@ import type {
   Post,
   Term,
 } from "@/lib/domain/types";
-import { rewriteContentHtml, toProxyUrl } from "@/lib/media/proxy";
+import { prepareContentHtml, toProxyUrl } from "@/lib/media/proxy";
 import type {
   PostRepository,
   TaxonomyRepository,
@@ -127,7 +127,7 @@ function normalize(post: WPPost): Post {
     slug: post.slug,
     title: decodeEntities(stripHtml(post.title.rendered)),
     excerpt: stripHtml(post.excerpt.rendered).slice(0, 280),
-    contentHtml: rewriteContentHtml(post.content?.rendered ?? ""),
+    contentHtml: prepareContentHtml(post.content?.rendered ?? ""),
     date: post.date,
     modified: post.modified,
     canonicalPath: `/posts/${post.slug}`,

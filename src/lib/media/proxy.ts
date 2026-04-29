@@ -79,3 +79,51 @@ export function rewriteContentHtml(html: string): string {
 
   return out;
 }
+
+const STRIP_BLOCK_TAGS = [
+  "script",
+  "style",
+  "form",
+  "button",
+  "select",
+  "textarea",
+  "noscript",
+] as const;
+const STRIP_VOID_TAGS = ["input"] as const;
+const EVENT_HANDLER_ATTR_RE = /\s+on[a-z]+\s*=\s*(["'])[\s\S]*?\1/gi;
+const IFRAME_NO_TITLE_RE = /<iframe\b(?![^>]*\btitle=)([^>]*)>/gi;
+const BAD_ANCHOR_RE =
+  /<a\b(?![^>]*\bhref=(["'])(?:[\/#]|https?:\/\/|mailto:|tel:)[^"']*\1)[^>]*>([\s\S]*?)<\/a>/gi;
+const ANCHOR_WRAPS_IMG_RE =
+  /(<a\b)([^>]*?)(>\s*<img\b[^>]*\balt=(["'])([^"']*)\4[^>]*?>\s*<\/a>)/gi;
+
+export function sanitizeContentHtml(html: string): string {
+  let out = html;
+
+  for (const tag of STRIP_BLOCK_TAGS) {
+    const re = new RegExp(`<${tag}\\b[\\s\\S]*?<\\/${tag}>`, "gi");
+    out = out.replace(re, "");
+  }
+  for (const tag of STRIP_VOID_TAGS) {
+    const re = new RegExp(`<${tag}\\b[^>]*\\/?>`, "gi");
+    out = out.replace(re, "");
+  }
+
+  out = out.replace(EVENT_HANDLER_ATTR_RE, "");
+
+  out = out.replace(IFRAME_NO_TITLE_RE, '<iframe$1 title="Embedded content">');
+
+  out = out.replace(BAD_ANCHOR_RE, "<span>$2</span>");
+
+  out = out.replace(ANCHOR_WRAPS_IMG_RE, (match, open, attrs, rest, _q, alt) => {
+    if (/\baria-label=/i.test(attrs)) return match;
+    const label = (alt.trim() || "Image gallery item").replace(/"/g, "&quot;");
+    return `${open}${attrs} aria-label="${label}"${rest}`;
+  });
+
+  return out;
+}
+
+export function prepareContentHtml(html: string): string {
+  return rewriteContentHtml(sanitizeContentHtml(html));
+}
