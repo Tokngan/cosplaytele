@@ -65,7 +65,7 @@ export default async function PostPage({ params }: { params: Params }) {
     datePublished: post.date,
     dateModified: post.modified,
     mainEntityOfPage: `${siteConfig.url}${post.canonicalPath}`,
-    image: post.featuredImage ? [post.featuredImage.url] : undefined,
+    image: post.featuredImage ? [`${siteConfig.url}${post.featuredImage.url}`] : undefined,
     articleSection: post.categories.map((c) => c.name),
     keywords: post.tags.map((t) => t.name).join(", "),
     publisher: {

@@ -19,11 +19,21 @@ export function isAllowedMediaHost(urlString: string): boolean {
   }
 }
 
+const MEDIA_EXT_RE = /\.(jpe?g|png|gif|webp|avif|svg|mp4|webm|mov|m4v)(\?|$)/i;
+
 export function rewriteUpstreamLinkToInternal(href: string): string {
+  if (MEDIA_EXT_RE.test(href) && isAllowedMediaHost(href)) {
+    return toProxyUrl(href);
+  }
+
   try {
     const url = new URL(href, upstreamConfig.siteOrigin);
     const upstreamHost = new URL(upstreamConfig.siteOrigin).hostname;
     if (url.hostname !== upstreamHost) return href;
+
+    if (url.pathname.startsWith("/wp-content/") || url.pathname.startsWith("/wp-json/")) {
+      return toProxyUrl(href);
+    }
 
     const path = url.pathname.replace(/\/+$/, "");
     const segments = path.split("/").filter(Boolean);
